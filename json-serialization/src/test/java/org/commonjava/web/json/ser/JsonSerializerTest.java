@@ -43,7 +43,7 @@ public class JsonSerializerTest
     @Test
     public void roundTripWithJsonAdaptersAnnotation()
     {
-        final AnnotatedTestData td = new AnnotatedTestData( "This is a test" );
+        final AnnotatedTestData td = new AnnotatedTestData( "This is a test", "test number 2" );
         final JsonSerializer ser = new JsonSerializer();
         final String json = ser.toString( td );
 
@@ -53,6 +53,9 @@ public class JsonSerializerTest
         final AnnotatedTestData td2 = ser.fromString( json, AnnotatedTestData.class );
 
         assertThat( td2.getValue(), equalTo( td.getValue() ) );
+        assertThat( td2.getValue2()
+                       .getValue(), equalTo( td.getValue2()
+                                               .getValue() ) );
 
     }
 

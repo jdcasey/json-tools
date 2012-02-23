@@ -20,6 +20,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Field;
 import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.Collections;
@@ -74,28 +75,7 @@ public class JsonSerializer
         final GsonBuilder builder = new GsonBuilder();
         if ( type != null )
         {
-            final JsonAdapters adapters = type.getAnnotation( JsonAdapters.class );
-            if ( adapters != null )
-            {
-                for ( final Class<? extends WebSerializationAdapter> adapterCls : adapters.value() )
-                {
-                    try
-                    {
-                        adapterCls.newInstance()
-                                  .register( builder );
-                    }
-                    catch ( final InstantiationException e )
-                    {
-                        throw new RuntimeException( "Cannot instantiate adapter from JsonAdapters annotation: "
-                            + adapterCls.getName() );
-                    }
-                    catch ( final IllegalAccessException e )
-                    {
-                        throw new RuntimeException( "Cannot instantiate adapter from JsonAdapters annotation: "
-                            + adapterCls.getName() );
-                    }
-                }
-            }
+            registerAnnotationAdapters( type, builder );
         }
 
         if ( adapterInstance != null )
@@ -120,6 +100,39 @@ public class JsonSerializer
         }
 
         return builder.create();
+    }
+
+    private void registerAnnotationAdapters( final Class<?> type, final GsonBuilder builder )
+    {
+        final JsonAdapters adapters = type.getAnnotation( JsonAdapters.class );
+        if ( adapters != null )
+        {
+            for ( final Class<? extends WebSerializationAdapter> adapterCls : adapters.value() )
+            {
+                try
+                {
+                    adapterCls.newInstance()
+                              .register( builder );
+                }
+                catch ( final InstantiationException e )
+                {
+                    throw new RuntimeException( "Cannot instantiate adapter from JsonAdapters annotation: "
+                        + adapterCls.getName() );
+                }
+                catch ( final IllegalAccessException e )
+                {
+                    throw new RuntimeException( "Cannot instantiate adapter from JsonAdapters annotation: "
+                        + adapterCls.getName() );
+                }
+            }
+        }
+
+        final Field[] fields = type.getDeclaredFields();
+        for ( final Field field : fields )
+        {
+            final Class<?> fieldType = field.getType();
+            registerAnnotationAdapters( fieldType, builder );
+        }
     }
 
     public String toString( final Object src )

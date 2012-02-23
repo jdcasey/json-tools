@@ -20,14 +20,38 @@ public class AnnotatedTestData
 
     private final String value;
 
-    public AnnotatedTestData( final String value )
+    private final TestValue value2;
+
+    public AnnotatedTestData( final String value, final String value2 )
     {
         this.value = value;
+        this.value2 = new TestValue( value2 );
+    }
+
+    public TestValue getValue2()
+    {
+        return value2;
     }
 
     public String getValue()
     {
         return value;
+    }
+
+    @JsonAdapters( Ser2.class )
+    public static final class TestValue
+    {
+        private final String innerValue;
+
+        public TestValue( final String innerValue )
+        {
+            this.innerValue = innerValue;
+        }
+
+        public String getValue()
+        {
+            return innerValue;
+        }
     }
 
     public static final class Ser
@@ -42,7 +66,14 @@ public class AnnotatedTestData
             final String val = json.getAsJsonObject()
                                    .get( "foo" )
                                    .getAsString();
-            return new AnnotatedTestData( val );
+
+            final String val2 = json.getAsJsonObject()
+                                    .get( "bar" )
+                                    .getAsJsonObject()
+                                    .get( "baz" )
+                                    .getAsString();
+
+            return new AnnotatedTestData( val, val2 );
         }
 
         @Override
@@ -51,6 +82,9 @@ public class AnnotatedTestData
         {
             final JsonObject result = new JsonObject();
             result.addProperty( "foo", src.getValue() );
+
+            final JsonElement v2 = context.serialize( src.getValue2() );
+            result.add( "bar", v2 );
             return result;
         }
 
@@ -58,6 +92,26 @@ public class AnnotatedTestData
         public void register( final GsonBuilder gsonBuilder )
         {
             gsonBuilder.registerTypeAdapter( AnnotatedTestData.class, this );
+        }
+
+    }
+
+    public static final class Ser2
+        implements WebSerializationAdapter, JsonSerializer<TestValue>
+    {
+
+        @Override
+        public JsonElement serialize( final TestValue src, final Type typeOfSrc, final JsonSerializationContext context )
+        {
+            final JsonObject result = new JsonObject();
+            result.addProperty( "baz", src.getValue() );
+            return result;
+        }
+
+        @Override
+        public void register( final GsonBuilder gsonBuilder )
+        {
+            gsonBuilder.registerTypeAdapter( TestValue.class, this );
         }
 
     }
