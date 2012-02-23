@@ -75,7 +75,7 @@ public class JsonSerializer
         final GsonBuilder builder = new GsonBuilder();
         if ( type != null )
         {
-            registerAnnotationAdapters( type, builder );
+            registerAnnotationAdapters( type, builder, new HashSet<Class<?>>() );
         }
 
         if ( adapterInstance != null )
@@ -102,8 +102,14 @@ public class JsonSerializer
         return builder.create();
     }
 
-    private void registerAnnotationAdapters( final Class<?> type, final GsonBuilder builder )
+    private void registerAnnotationAdapters( final Class<?> type, final GsonBuilder builder, final Set<Class<?>> seen )
     {
+        if ( seen.contains( type ) )
+        {
+            return;
+        }
+
+        seen.add( type );
         final JsonAdapters adapters = type.getAnnotation( JsonAdapters.class );
         if ( adapters != null )
         {
@@ -131,7 +137,7 @@ public class JsonSerializer
         for ( final Field field : fields )
         {
             final Class<?> fieldType = field.getType();
-            registerAnnotationAdapters( fieldType, builder );
+            registerAnnotationAdapters( fieldType, builder, seen );
         }
     }
 
