@@ -69,19 +69,32 @@ public class JsonSerializer
         this.baseAdapters.addAll( Arrays.asList( adapters ) );
     }
 
-    private Gson getGson()
+    private Gson getGson( final Class<?> type )
     {
         final GsonBuilder builder = new GsonBuilder();
-        for ( final WebSerializationAdapter adapter : DEFAULT_ADAPTERS )
+        if ( type != null )
         {
-            adapter.register( builder );
-        }
-
-        if ( baseAdapters != null )
-        {
-            for ( final WebSerializationAdapter adapter : baseAdapters )
+            final JsonAdapters adapters = type.getAnnotation( JsonAdapters.class );
+            if ( adapters != null )
             {
-                adapter.register( builder );
+                for ( final Class<? extends WebSerializationAdapter> adapterCls : adapters.value() )
+                {
+                    try
+                    {
+                        adapterCls.newInstance()
+                                  .register( builder );
+                    }
+                    catch ( final InstantiationException e )
+                    {
+                        throw new RuntimeException( "Cannot instantiate adapter from JsonAdapters annotation: "
+                            + adapterCls.getName() );
+                    }
+                    catch ( final IllegalAccessException e )
+                    {
+                        throw new RuntimeException( "Cannot instantiate adapter from JsonAdapters annotation: "
+                            + adapterCls.getName() );
+                    }
+                }
             }
         }
 
@@ -93,17 +106,30 @@ public class JsonSerializer
             }
         }
 
+        if ( baseAdapters != null )
+        {
+            for ( final WebSerializationAdapter adapter : baseAdapters )
+            {
+                adapter.register( builder );
+            }
+        }
+
+        for ( final WebSerializationAdapter adapter : DEFAULT_ADAPTERS )
+        {
+            adapter.register( builder );
+        }
+
         return builder.create();
     }
 
     public String toString( final Object src )
     {
-        return getGson().toJson( src );
+        return getGson( src.getClass() ).toJson( src );
     }
 
     public String toString( final Object src, final Type type )
     {
-        return getGson().toJson( src, type );
+        return getGson( src.getClass() ).toJson( src, type );
     }
 
     public <T> T fromRequestBody( final HttpServletRequest req, final Class<T> type,
@@ -130,7 +156,7 @@ public class JsonSerializer
     public <T> T fromString( final String src, final Class<T> type,
                              final DeserializerPostProcessor<T>... postProcessors )
     {
-        final T result = getGson().fromJson( src, type );
+        final T result = getGson( type ).fromJson( src, type );
 
         if ( result != null )
         {
@@ -157,7 +183,7 @@ public class JsonSerializer
             final String json = IOUtils.toString( reader );
             logger.info( "JSON:\n\n%s\n\n", json );
 
-            final T result = getGson().fromJson( json, type );
+            final T result = getGson( type ).fromJson( json, type );
 
             if ( result != null )
             {
@@ -192,7 +218,7 @@ public class JsonSerializer
 
         try
         {
-            Listing<T> result = getGson().fromJson( new InputStreamReader( stream, encoding ), token.getType() );
+            Listing<T> result = getGson( null ).fromJson( new InputStreamReader( stream, encoding ), token.getType() );
 
             if ( result != null && result.getItems() != null )
             {
@@ -222,7 +248,7 @@ public class JsonSerializer
     public <T> Listing<T> listingFromString( final String src, final TypeToken<Listing<T>> token,
                                              final DeserializerPostProcessor<T>... postProcessors )
     {
-        Listing<T> result = getGson().fromJson( src, token.getType() );
+        Listing<T> result = getGson( null ).fromJson( src, token.getType() );
 
         if ( result != null && result.getItems() != null )
         {
