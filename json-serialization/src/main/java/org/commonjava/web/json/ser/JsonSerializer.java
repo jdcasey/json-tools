@@ -117,6 +117,7 @@ public class JsonSerializer
             {
                 try
                 {
+                    logger.info( "[REGISTER] JSON adapter from annotation: %s", adapterCls.getName() );
                     adapterCls.newInstance()
                               .register( builder );
                 }
