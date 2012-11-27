@@ -3,9 +3,15 @@ package org.commonjava.web.json.ser;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertThat;
 
+import java.util.HashSet;
+import java.util.Set;
+
+import org.apache.log4j.Level;
+import org.commonjava.util.logging.Log4jUtil;
 import org.commonjava.web.json.model.Listing;
 import org.commonjava.web.json.ser.fixture.AnnotatedTestData;
 import org.commonjava.web.json.ser.fixture.TestData;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.google.gson.reflect.TypeToken;
@@ -13,11 +19,38 @@ import com.google.gson.reflect.TypeToken;
 public class JsonSerializerTest
 {
 
+    @BeforeClass
+    public static void setupLogging()
+    {
+        Log4jUtil.configure( Level.DEBUG );
+    }
+
     @Test
     public void serializeTestObject()
     {
         final String json = new JsonSerializer().toString( new TestData( "email@nowhere.com", "my name" ) );
         System.out.println( json );
+    }
+
+    @Test
+    public void roundTripSet()
+    {
+        final Set<String> set = new HashSet<String>();
+        set.add( "foo" );
+        set.add( "bar" );
+        set.add( "blat" );
+
+        final String json = new JsonSerializer().toString( set );
+
+        System.out.println( json );
+
+        final Set<String> result = new JsonSerializer().fromString( json, new TypeToken<Set<String>>()
+        {
+        } );
+
+        assertThat( result.contains( "foo" ), equalTo( true ) );
+        assertThat( result.contains( "bar" ), equalTo( true ) );
+        assertThat( result.contains( "blat" ), equalTo( true ) );
     }
 
     @Test
@@ -39,7 +72,6 @@ public class JsonSerializerTest
         assertThat( json.contains( "other name" ), equalTo( true ) );
     }
 
-    @SuppressWarnings( "unchecked" )
     @Test
     public void roundTripWithJsonAdaptersAnnotation()
     {

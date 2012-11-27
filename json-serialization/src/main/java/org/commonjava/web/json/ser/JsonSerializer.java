@@ -70,12 +70,12 @@ public class JsonSerializer
         this.baseAdapters.addAll( Arrays.asList( adapters ) );
     }
 
-    private Gson getGson( final Class<?> type )
+    private Gson getGson( final Type type )
     {
         final GsonBuilder builder = new GsonBuilder();
         if ( type != null )
         {
-            registerAnnotationAdapters( type, builder, new HashSet<Class<?>>() );
+            registerAnnotationAdapters( type, builder, new HashSet<Type>() );
         }
 
         if ( adapterInstance != null )
@@ -102,7 +102,7 @@ public class JsonSerializer
         return builder.create();
     }
 
-    private void registerAnnotationAdapters( final Class<?> type, final GsonBuilder builder, final Set<Class<?>> seen )
+    private void registerAnnotationAdapters( final Type type, final GsonBuilder builder, final Set<Type> seen )
     {
         if ( seen.contains( type ) )
         {
@@ -110,35 +110,39 @@ public class JsonSerializer
         }
 
         seen.add( type );
-        final JsonAdapters adapters = type.getAnnotation( JsonAdapters.class );
-        if ( adapters != null )
+        if ( type instanceof Class<?> )
         {
-            for ( final Class<? extends WebSerializationAdapter> adapterCls : adapters.value() )
+            final Class<?> typeCls = (Class<?>) type;
+            final JsonAdapters adapters = typeCls.getAnnotation( JsonAdapters.class );
+            if ( adapters != null )
             {
-                try
+                for ( final Class<? extends WebSerializationAdapter> adapterCls : adapters.value() )
                 {
-                    logger.info( "[REGISTER] JSON adapter from annotation: %s", adapterCls.getName() );
-                    adapterCls.newInstance()
-                              .register( builder );
-                }
-                catch ( final InstantiationException e )
-                {
-                    throw new RuntimeException( "Cannot instantiate adapter from JsonAdapters annotation: "
-                        + adapterCls.getName() );
-                }
-                catch ( final IllegalAccessException e )
-                {
-                    throw new RuntimeException( "Cannot instantiate adapter from JsonAdapters annotation: "
-                        + adapterCls.getName() );
+                    try
+                    {
+                        logger.info( "[REGISTER] JSON adapter from annotation: %s", adapterCls.getName() );
+                        adapterCls.newInstance()
+                                  .register( builder );
+                    }
+                    catch ( final InstantiationException e )
+                    {
+                        throw new RuntimeException( "Cannot instantiate adapter from JsonAdapters annotation: "
+                            + adapterCls.getName() );
+                    }
+                    catch ( final IllegalAccessException e )
+                    {
+                        throw new RuntimeException( "Cannot instantiate adapter from JsonAdapters annotation: "
+                            + adapterCls.getName() );
+                    }
                 }
             }
-        }
 
-        final Field[] fields = type.getDeclaredFields();
-        for ( final Field field : fields )
-        {
-            final Class<?> fieldType = field.getType();
-            registerAnnotationAdapters( fieldType, builder, seen );
+            final Field[] fields = typeCls.getDeclaredFields();
+            for ( final Field field : fields )
+            {
+                final Class<?> fieldType = field.getType();
+                registerAnnotationAdapters( fieldType, builder, seen );
+            }
         }
     }
 
@@ -152,8 +156,7 @@ public class JsonSerializer
         return getGson( src.getClass() ).toJson( src, type );
     }
 
-    public <T> T fromRequestBody( final HttpServletRequest req, final Class<T> type,
-                                  final DeserializerPostProcessor<T>... postProcessors )
+    public <T> T fromRequestBody( final HttpServletRequest req, final Class<T> type )
     {
         String encoding = req.getCharacterEncoding();
         if ( encoding == null )
@@ -163,34 +166,53 @@ public class JsonSerializer
 
         try
         {
-            return fromStream( req.getInputStream(), encoding, type, postProcessors );
+            return fromStream( req.getInputStream(), encoding, type );
         }
         catch ( final IOException e )
         {
             logger.error( "Failed to deserialize type: %s from HttpServletRequest body. Error: %s", e, type.getName(),
                           e.getMessage() );
+
             throw new RuntimeException( "Cannot read request." );
         }
     }
 
-    public <T> T fromString( final String src, final Class<T> type,
-                             final DeserializerPostProcessor<T>... postProcessors )
+    public <T> T fromRequestBody( final HttpServletRequest req, final TypeToken<T> token )
+    {
+        String encoding = req.getCharacterEncoding();
+        if ( encoding == null )
+        {
+            encoding = "UTF-8";
+        }
+
+        try
+        {
+            return fromStream( req.getInputStream(), encoding, token );
+        }
+        catch ( final IOException e )
+        {
+            logger.error( "Failed to deserialize type: %s from HttpServletRequest body. Error: %s", e, token.getType(),
+                          e.getMessage() );
+
+            throw new RuntimeException( "Cannot read request." );
+        }
+    }
+
+    public <T> T fromString( final String src, final Class<T> type )
     {
         final T result = getGson( type ).fromJson( src, type );
-
-        if ( result != null )
-        {
-            for ( final DeserializerPostProcessor<T> proc : postProcessors )
-            {
-                proc.process( result );
-            }
-        }
 
         return result;
     }
 
-    public <T> T fromStream( final InputStream stream, String encoding, final Class<T> type,
-                             final DeserializerPostProcessor<T>... postProcessors )
+    public <T> T fromString( final String src, final TypeToken<T> token )
+    {
+        final T result = getGson( token.getType() ).fromJson( src, token.getType() );
+
+        return result;
+    }
+
+    public <T> T fromStream( final InputStream stream, String encoding, final Class<T> type )
     {
         if ( encoding == null )
         {
@@ -205,14 +227,6 @@ public class JsonSerializer
 
             final T result = getGson( type ).fromJson( json, type );
 
-            if ( result != null )
-            {
-                for ( final DeserializerPostProcessor<T> proc : postProcessors )
-                {
-                    proc.process( result );
-                }
-            }
-
             return result;
         }
         catch ( final UnsupportedEncodingException e )
@@ -223,6 +237,35 @@ public class JsonSerializer
         catch ( final IOException e )
         {
             logger.error( "Failed to deserialize type: %s. Error: %s", e, type.getName(), e.getMessage() );
+            throw new RuntimeException( "Cannot read stream." );
+        }
+    }
+
+    public <T> T fromStream( final InputStream stream, String encoding, final TypeToken<T> token )
+    {
+        if ( encoding == null )
+        {
+            encoding = "UTF-8";
+        }
+
+        try
+        {
+            final Reader reader = new InputStreamReader( stream, encoding );
+            final String json = IOUtils.toString( reader );
+            logger.info( "JSON:\n\n%s\n\n", json );
+
+            final T result = getGson( token.getType() ).fromJson( json, token.getType() );
+
+            return result;
+        }
+        catch ( final UnsupportedEncodingException e )
+        {
+            logger.error( "Failed to deserialize type: %s. Error: %s", e, token.getType(), e.getMessage() );
+            throw new RuntimeException( "Cannot read stream." );
+        }
+        catch ( final IOException e )
+        {
+            logger.error( "Failed to deserialize type: %s. Error: %s", e, token.getType(), e.getMessage() );
             throw new RuntimeException( "Cannot read stream." );
         }
     }
