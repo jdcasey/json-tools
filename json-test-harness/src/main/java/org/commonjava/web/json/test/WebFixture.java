@@ -215,7 +215,6 @@ public class WebFixture
         {
             return http.execute( get, new ResponseHandler<T>()
             {
-                @SuppressWarnings( "unchecked" )
                 @Override
                 public T handleResponse( final HttpResponse response )
                     throws ClientProtocolException, IOException
