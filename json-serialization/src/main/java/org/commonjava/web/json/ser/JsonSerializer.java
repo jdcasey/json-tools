@@ -202,7 +202,7 @@ public class JsonSerializer
         }
     }
 
-    public <T> T fromString( final String src, final Class<T> type )
+    public <T> T fromString( final String src, final Type type )
     {
         final T result = getGson( type ).fromJson( src, type );
 
