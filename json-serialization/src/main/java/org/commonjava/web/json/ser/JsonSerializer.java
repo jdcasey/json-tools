@@ -229,7 +229,8 @@ public class JsonSerializer
             final String json = IOUtils.toString( reader );
             logger.info( "JSON:\n\n%s\n\n", json );
 
-            final T result = getGson( type ).fromJson( json, type );
+            T result = getGson( type ).fromJson( json, type );
+            result = postProcess( result );
 
             return result;
         }
@@ -243,6 +244,12 @@ public class JsonSerializer
             logger.error( "Failed to deserialize type: %s. Error: %s", e, type.getName(), e.getMessage() );
             throw new RuntimeException( "Cannot read stream." );
         }
+    }
+
+    private <T> T postProcess( final T input )
+    {
+        // TODO: Read postprocessing annotation and invoke in order...
+        return input;
     }
 
     public <T> T fromStream( final InputStream stream, String encoding, final TypeToken<T> token )
