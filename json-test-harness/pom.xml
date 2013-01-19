@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.commonjava.web</groupId>
     <artifactId>json-tools</artifactId>
-    <version>0.3</version>
+    <version>0.4-SNAPSHOT</version>
   </parent>
 
   <artifactId>json-test-harness</artifactId>
