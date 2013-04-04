@@ -124,7 +124,7 @@ public class JsonSerializer
                 {
                     try
                     {
-                        logger.info( "[REGISTER] JSON adapter from annotation: %s", adapterCls.getName() );
+                        logger.debug( "[REGISTER] JSON adapter from annotation: %s", adapterCls.getName() );
                         adapterCls.newInstance()
                                   .register( builder );
                     }
@@ -227,7 +227,7 @@ public class JsonSerializer
         {
             final Reader reader = new InputStreamReader( stream, encoding );
             final String json = IOUtils.toString( reader );
-            logger.info( "JSON:\n\n%s\n\n", json );
+            logger.debug( "JSON:\n\n%s\n\n", json );
 
             T result = getGson( type ).fromJson( json, type );
             result = postProcess( result );
@@ -263,7 +263,7 @@ public class JsonSerializer
         {
             final Reader reader = new InputStreamReader( stream, encoding );
             final String json = IOUtils.toString( reader );
-            logger.info( "JSON:\n\n%s\n\n", json );
+            logger.debug( "JSON:\n\n%s\n\n", json );
 
             final T result = getGson( token.getType() ).fromJson( json, token.getType() );
 
