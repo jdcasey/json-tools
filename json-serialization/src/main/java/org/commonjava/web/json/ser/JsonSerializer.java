@@ -34,7 +34,6 @@ import javax.enterprise.inject.Any;
 import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 import javax.inject.Named;
-import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.io.IOUtils;
 import org.commonjava.util.logging.Logger;
@@ -158,48 +157,6 @@ public class JsonSerializer
     public String toString( final Object src, final Type type )
     {
         return getGson( src.getClass() ).toJson( src, type );
-    }
-
-    public <T> T fromRequestBody( final HttpServletRequest req, final Class<T> type )
-    {
-        String encoding = req.getCharacterEncoding();
-        if ( encoding == null )
-        {
-            encoding = "UTF-8";
-        }
-
-        try
-        {
-            return fromStream( req.getInputStream(), encoding, type );
-        }
-        catch ( final IOException e )
-        {
-            logger.error( "Failed to deserialize type: %s from HttpServletRequest body. Error: %s", e, type.getName(),
-                          e.getMessage() );
-
-            throw new RuntimeException( "Cannot read request." );
-        }
-    }
-
-    public <T> T fromRequestBody( final HttpServletRequest req, final TypeToken<T> token )
-    {
-        String encoding = req.getCharacterEncoding();
-        if ( encoding == null )
-        {
-            encoding = "UTF-8";
-        }
-
-        try
-        {
-            return fromStream( req.getInputStream(), encoding, token );
-        }
-        catch ( final IOException e )
-        {
-            logger.error( "Failed to deserialize type: %s from HttpServletRequest body. Error: %s", e, token.getType(),
-                          e.getMessage() );
-
-            throw new RuntimeException( "Cannot read request." );
-        }
     }
 
     public <T> T fromString( final String src, final Type type )
