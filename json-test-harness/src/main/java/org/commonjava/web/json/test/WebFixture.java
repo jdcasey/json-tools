@@ -54,17 +54,18 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.client.DefaultRedirectStrategy;
 import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
 import org.apache.http.protocol.HttpContext;
-import org.commonjava.util.logging.Logger;
 import org.commonjava.web.json.model.Listing;
 import org.commonjava.web.json.ser.JsonSerializer;
 import org.junit.rules.ExternalResource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.gson.reflect.TypeToken;
 
 public class WebFixture
     extends ExternalResource
 {
-    private final Logger logger = new Logger( getClass() );
+    private final Logger logger = LoggerFactory.getLogger( getClass() );
 
     public static final String DEFAULT_HOST = "localhost";
 
@@ -129,7 +130,7 @@ public class WebFixture
 
             final StringWriter sw = new StringWriter();
             props.list( new PrintWriter( sw ) );
-            logger.info( "Loaded properties from: %s\n\n%s", QARQAS_PROPERTIES, sw.toString() );
+            logger.info( "Loaded properties from: {}\n\n{}", QARQAS_PROPERTIES, sw.toString() );
         }
 
         String portStr = props.getProperty( QARQAS_HTTP_PROP );
@@ -138,7 +139,7 @@ public class WebFixture
             portStr = System.getProperty( HTTP_PROP, DEFAULT_PORT );
         }
 
-        logger.info( "HTTP port: %s", portStr );
+        logger.info( "HTTP port: {}", portStr );
         this.port = Integer.parseInt( portStr );
     }
 
@@ -147,8 +148,7 @@ public class WebFixture
         http.setRedirectStrategy( new DefaultRedirectStrategy()
         {
             @Override
-            public boolean isRedirected( final HttpRequest request, final HttpResponse response,
-                                         final HttpContext context )
+            public boolean isRedirected( final HttpRequest request, final HttpResponse response, final HttpContext context )
                 throws ProtocolException
             {
                 return false;
@@ -208,7 +208,7 @@ public class WebFixture
     public <T> T get( final String url, final Class<T> type )
         throws Exception
     {
-        logger.info( "WebFixture: GET '%s', expecting: 200, return-type: %s", url, type.getName() );
+        logger.info( "WebFixture: GET '{}', expecting: 200, return-type: {}", url, type.getName() );
         final HttpGet get = new HttpGet( url );
         get.setHeader( HttpHeaders.ACCEPT, "application/json" );
         try
@@ -236,7 +236,7 @@ public class WebFixture
     public void get( final String url, final int expectedStatus )
         throws Exception
     {
-        logger.info( "WebFixture: GET '%s', expecting: %s", url, expectedStatus );
+        logger.info( "WebFixture: GET '{}', expecting: {}", url, expectedStatus );
         final HttpGet get = new HttpGet( url );
         try
         {
@@ -403,8 +403,7 @@ public class WebFixture
         }
     }
 
-    public HttpResponse put( final String url, final int status, final InputStream stream, final String contentType,
-                             final int contentLength )
+    public HttpResponse put( final String url, final int status, final InputStream stream, final String contentType, final int contentLength )
         throws Exception
     {
         final HttpPut request = new HttpPut( url );

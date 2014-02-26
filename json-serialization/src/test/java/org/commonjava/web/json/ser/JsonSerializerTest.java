@@ -1,17 +1,15 @@
 package org.commonjava.web.json.ser;
 
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
 
 import java.util.HashSet;
 import java.util.Set;
 
-import org.apache.log4j.Level;
-import org.commonjava.util.logging.Log4jUtil;
 import org.commonjava.web.json.model.Listing;
 import org.commonjava.web.json.ser.fixture.AnnotatedTestData;
 import org.commonjava.web.json.ser.fixture.TestData;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.google.gson.reflect.TypeToken;
@@ -19,10 +17,12 @@ import com.google.gson.reflect.TypeToken;
 public class JsonSerializerTest
 {
 
-    @BeforeClass
-    public static void setupLogging()
+    @Test
+    public void deserializeEmptyStringReturnsNull()
     {
-        Log4jUtil.configure( Level.DEBUG );
+        final String json = "";
+        final TestData data = new JsonSerializer().fromString( json, TestData.class );
+        assertThat( data, nullValue() );
     }
 
     @Test
@@ -57,8 +57,7 @@ public class JsonSerializerTest
     public void serializeListing()
     {
         final Listing<TestData> listing =
-            new Listing<TestData>( new TestData( "email@nowhere.com", "my name" ), new TestData( "root@nowhere.com",
-                                                                                                 "other name" ) );
+            new Listing<TestData>( new TestData( "email@nowhere.com", "my name" ), new TestData( "root@nowhere.com", "other name" ) );
 
         final String json = new JsonSerializer().toString( listing, new TypeToken<Listing<TestData>>()
         {

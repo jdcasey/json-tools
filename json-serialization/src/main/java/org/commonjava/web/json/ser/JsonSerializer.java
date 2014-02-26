@@ -36,8 +36,9 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.apache.commons.io.IOUtils;
-import org.commonjava.util.logging.Logger;
 import org.commonjava.web.json.model.Listing;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -49,7 +50,7 @@ import com.google.gson.reflect.TypeToken;
 public class JsonSerializer
 {
 
-    private final Logger logger = new Logger( getClass() );
+    private final Logger logger = LoggerFactory.getLogger( getClass() );
 
     private static final WebSerializationAdapter[] DEFAULT_ADAPTERS = { new ListingAdapter() };
 
@@ -123,19 +124,17 @@ public class JsonSerializer
                 {
                     try
                     {
-                        logger.debug( "[REGISTER] JSON adapter from annotation: %s", adapterCls.getName() );
+                        logger.debug( "[REGISTER] JSON adapter from annotation: {}", adapterCls.getName() );
                         adapterCls.newInstance()
                                   .register( builder );
                     }
                     catch ( final InstantiationException e )
                     {
-                        throw new RuntimeException( "Cannot instantiate adapter from JsonAdapters annotation: "
-                            + adapterCls.getName() );
+                        throw new RuntimeException( "Cannot instantiate adapter from JsonAdapters annotation: " + adapterCls.getName() );
                     }
                     catch ( final IllegalAccessException e )
                     {
-                        throw new RuntimeException( "Cannot instantiate adapter from JsonAdapters annotation: "
-                            + adapterCls.getName() );
+                        throw new RuntimeException( "Cannot instantiate adapter from JsonAdapters annotation: " + adapterCls.getName() );
                     }
                 }
             }
@@ -184,7 +183,7 @@ public class JsonSerializer
         {
             final Reader reader = new InputStreamReader( stream, encoding );
             final String json = IOUtils.toString( reader );
-            logger.debug( "JSON:\n\n%s\n\n", json );
+            logger.debug( "JSON:\n\n{}\n\n", json );
 
             T result = getGson( type ).fromJson( json, type );
             result = postProcess( result );
@@ -193,12 +192,12 @@ public class JsonSerializer
         }
         catch ( final UnsupportedEncodingException e )
         {
-            logger.error( "Failed to deserialize type: %s. Error: %s", e, type.getName(), e.getMessage() );
+            logger.error( "Failed to deserialize type: {}. Error: {}", e, type.getName(), e.getMessage() );
             throw new RuntimeException( "Cannot read stream." );
         }
         catch ( final IOException e )
         {
-            logger.error( "Failed to deserialize type: %s. Error: %s", e, type.getName(), e.getMessage() );
+            logger.error( "Failed to deserialize type: {}. Error: {}", e, type.getName(), e.getMessage() );
             throw new RuntimeException( "Cannot read stream." );
         }
     }
@@ -220,7 +219,7 @@ public class JsonSerializer
         {
             final Reader reader = new InputStreamReader( stream, encoding );
             final String json = IOUtils.toString( reader );
-            logger.debug( "JSON:\n\n%s\n\n", json );
+            logger.debug( "JSON:\n\n{}\n\n", json );
 
             final T result = getGson( token.getType() ).fromJson( json, token.getType() );
 
@@ -228,18 +227,17 @@ public class JsonSerializer
         }
         catch ( final UnsupportedEncodingException e )
         {
-            logger.error( "Failed to deserialize type: %s. Error: %s", e, token.getType(), e.getMessage() );
+            logger.error( "Failed to deserialize type: {}. Error: {}", e, token.getType(), e.getMessage() );
             throw new RuntimeException( "Cannot read stream." );
         }
         catch ( final IOException e )
         {
-            logger.error( "Failed to deserialize type: %s. Error: %s", e, token.getType(), e.getMessage() );
+            logger.error( "Failed to deserialize type: {}. Error: {}", e, token.getType(), e.getMessage() );
             throw new RuntimeException( "Cannot read stream." );
         }
     }
 
-    public <T> Listing<T> listingFromStream( final InputStream stream, String encoding,
-                                             final TypeToken<Listing<T>> token,
+    public <T> Listing<T> listingFromStream( final InputStream stream, String encoding, final TypeToken<Listing<T>> token,
                                              final DeserializerPostProcessor<T>... postProcessors )
     {
         if ( encoding == null )
@@ -270,7 +268,7 @@ public class JsonSerializer
         }
         catch ( final UnsupportedEncodingException e )
         {
-            logger.error( "Failed to deserialize type: %s. Error: %s", e, token.getType(), e.getMessage() );
+            logger.error( "Failed to deserialize type: {}. Error: {}", e, token.getType(), e.getMessage() );
 
             throw new RuntimeException( "Cannot read stream." );
         }

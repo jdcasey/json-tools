@@ -4,21 +4,21 @@ import java.io.IOException;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.commonjava.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.gson.reflect.TypeToken;
 
 public final class ServletSerializerUtils
 {
 
-    private static final Logger LOGGER = new Logger( ServletSerializerUtils.class );
+    private static final Logger LOGGER = LoggerFactory.getLogger( ServletSerializerUtils.class );
 
     private ServletSerializerUtils()
     {
     }
 
-    public static <T> T fromRequestBody( final HttpServletRequest req, final JsonSerializer serializer,
-                                         final Class<T> type )
+    public static <T> T fromRequestBody( final HttpServletRequest req, final JsonSerializer serializer, final Class<T> type )
     {
         String encoding = req.getCharacterEncoding();
         if ( encoding == null )
@@ -32,15 +32,13 @@ public final class ServletSerializerUtils
         }
         catch ( final IOException e )
         {
-            LOGGER.error( "Failed to deserialize type: %s from HttpServletRequest body. Error: %s", e, type.getName(),
-                          e.getMessage() );
+            LOGGER.error( "Failed to deserialize type: {} from HttpServletRequest body. Error: {}", e, type.getName(), e.getMessage() );
 
             throw new RuntimeException( "Cannot read request." );
         }
     }
 
-    public static <T> T fromRequestBody( final HttpServletRequest req, final JsonSerializer serializer,
-                                         final TypeToken<T> token )
+    public static <T> T fromRequestBody( final HttpServletRequest req, final JsonSerializer serializer, final TypeToken<T> token )
     {
         String encoding = req.getCharacterEncoding();
         if ( encoding == null )
@@ -54,8 +52,7 @@ public final class ServletSerializerUtils
         }
         catch ( final IOException e )
         {
-            LOGGER.error( "Failed to deserialize type: %s from HttpServletRequest body. Error: %s", e, token.getType(),
-                          e.getMessage() );
+            LOGGER.error( "Failed to deserialize type: {} from HttpServletRequest body. Error: {}", e, token.getType(), e.getMessage() );
 
             throw new RuntimeException( "Cannot read request." );
         }
