@@ -25,7 +25,7 @@
   
   <groupId>org.commonjava.web</groupId>
   <artifactId>json-tools</artifactId>
-  <version>0.6</version>
+  <version>0.7-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>JSON Tools (Parent)</name>
@@ -46,12 +46,12 @@
       <dependency>
         <groupId>org.commonjava.web</groupId>
         <artifactId>json-serialization</artifactId>
-        <version>0.6</version>
+        <version>0.7-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>org.commonjava.web</groupId>
         <artifactId>json-test-harness</artifactId>
-        <version>0.6</version>
+        <version>0.7-SNAPSHOT</version>
       </dependency>
       
       <dependency>
